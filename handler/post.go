@@ -53,3 +53,20 @@ func HandlePostPosts(db *sql.DB) echo.HandlerFunc {
 		return c.JSON(http.StatusCreated, p)
 	})
 }
+
+func HandleGetAllPosts(db *sql.DB) echo.HandlerFunc {
+	return echo.HandlerFunc(func(c echo.Context) error {
+		posts := model.Posts{}
+		if err := posts.ReadAllPosts(db); err != nil {
+			log.Println(fmt.Sprintf("Error reading all posts: %+v", err))
+			return c.JSON(
+				http.StatusInternalServerError,
+				schema.ErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    fmt.Sprintf(fmt.Sprintf("Error reading all posts: %+v", err)),
+				},
+			)
+		}
+		return c.JSON(http.StatusOK, posts)
+	})
+}

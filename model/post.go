@@ -15,6 +15,8 @@ type Post struct {
 	CreatedOn   time.Time  `json:"created_on"`
 }
 
+type Posts []Post
+
 func (p *Post) Create(db *sql.DB) error {
 	p.ID = uuid.NewString()
 	stmt, err := db.Prepare(
@@ -43,4 +45,33 @@ func (p *Post) Publish(db *sql.DB) error {
 	}
 	_, err = stmt.Exec(p.PublishedOn, p.ID)
 	return err
+}
+
+func (posts *Posts) ReadAllPosts(db *sql.DB) error {
+	stmt, err := db.Prepare(
+		`
+		SELECT id, title, content, published_on, created_on
+		FROM post
+		`,
+	)
+	if err != nil {
+		return err
+	}
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() {
+		p := Post{}
+
+		if err := rows.Scan(&p.ID, &p.Title, &p.Content, &p.PublishedOn, &p.CreatedOn); err != nil {
+			return err
+		}
+
+		*posts = append(*posts, p)
+	}
+
+	return nil
 }

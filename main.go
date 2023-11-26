@@ -17,4 +17,5 @@ func main() {
 	e := echo.New()
 
 	e.POST("/posts", handler.HandlePostPosts(db))
+	e.GET("/posts", handler.HandleGetAllPosts(db))
 }

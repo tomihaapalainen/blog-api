@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,8 +23,7 @@ func TestPostNewPost(t *testing.T) {
 
 	db, err := sql.Open("sqlite3", "file:../db.sqlite3?_fk=ON")
 	if err != nil {
-		log.Println(err)
-		t.FailNow()
+		t.Fatalf("err opening db: %+v", err)
 	}
 	e := echo.New()
 
@@ -63,8 +61,7 @@ func TestPostNewPostWithoutTitleShouldReturnBadRequest(t *testing.T) {
 
 	db, err := sql.Open("sqlite3", "file:../db.sqlite3?_fk=ON")
 	if err != nil {
-		log.Println(err)
-		t.FailNow()
+		t.Fatalf("err opening db: %+v", err)
 	}
 	e := echo.New()
 
@@ -85,8 +82,7 @@ func TestPostNewPostWithoutContentShouldReturnBadRequest(t *testing.T) {
 
 	db, err := sql.Open("sqlite3", "file:../db.sqlite3?_fk=ON")
 	if err != nil {
-		log.Println(err)
-		t.FailNow()
+		t.Fatalf("err opening db: %+v", err)
 	}
 	e := echo.New()
 
@@ -109,8 +105,7 @@ func TestPostNewPostWithoutContentShouldReturnBadRequest(t *testing.T) {
 func TestPostNewPostWithNullTitleShouldReturnBadRequest(t *testing.T) {
 	db, err := sql.Open("sqlite3", "file:../db.sqlite3?_fk=ON")
 	if err != nil {
-		log.Println(err)
-		t.FailNow()
+		t.Fatalf("err opening db: %+v", err)
 	}
 	e := echo.New()
 
@@ -133,8 +128,7 @@ func TestPostNewPostWithNullTitleShouldReturnBadRequest(t *testing.T) {
 func TestPostNewPostWithNullContentShouldReturnBadRequest(t *testing.T) {
 	db, err := sql.Open("sqlite3", "file:../db.sqlite3?_fk=ON")
 	if err != nil {
-		log.Println(err)
-		t.FailNow()
+		t.Fatalf("err opening db: %+v", err)
 	}
 	e := echo.New()
 
@@ -149,6 +143,28 @@ func TestPostNewPostWithNullContentShouldReturnBadRequest(t *testing.T) {
 		t.Fatalf("expected return code %d, was %d instead", http.StatusBadRequest, rec.Code)
 	}
 	res := schema.ErrorResponse{}
+	if err := json.NewDecoder(rec.Body).Decode(&res); err != nil {
+		t.Fatalf("unable to parse response: %+v", err)
+	}
+}
+
+func TestGetAllPosts(t *testing.T) {
+	db, err := sql.Open("sqlite3", "file:../db.sqlite3?_fk=ON")
+	if err != nil {
+		t.Fatalf("err opening db: %+v", err)
+	}
+	e := echo.New()
+
+	req := httptest.NewRequest("GET", "/posts", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	HandleGetAllPosts(db)(c)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("return code %d != %d", rec.Code, http.StatusOK)
+	}
+	res := model.Posts{}
 	if err := json.NewDecoder(rec.Body).Decode(&res); err != nil {
 		t.Fatalf("unable to parse response: %+v", err)
 	}
