@@ -14,9 +14,7 @@ import (
 	"github.com/tomihaapalainen/blog-api/model"
 )
 
-var testPostID string
-
-func setupSuite(tb testing.TB) {
+func setupTest(tb testing.TB) (*sql.DB, string) {
 	db, err := sql.Open("sqlite3", "file:../db.sqlite3?_fk=ON")
 	if err != nil {
 		tb.Fatalf("err opening db: %+v", err)
@@ -26,17 +24,18 @@ func setupSuite(tb testing.TB) {
 	if err != nil {
 		tb.Fatalf("err creating post: %+v", err)
 	}
-	testPostID = p.ID
+	c := model.Comment{PostID: p.ID, Content: "Test Comment"}
+	if err := c.Create(db); err != nil {
+		tb.Fatalf("err creating comment: %+v", err)
+	}
+
+	return db, p.ID
 }
 
 func TestPostComment(t *testing.T) {
-	setupSuite(t)
+	db, testPostID := setupTest(t)
 	content := "Test comment content."
 
-	db, err := sql.Open("sqlite3", "file:../db.sqlite3?_fk=ON")
-	if err != nil {
-		t.Fatalf("err opening db: %+v", err)
-	}
 	e := echo.New()
 
 	jsonStr := []byte(fmt.Sprintf(`{"post_id": "%s", "content": "%s"}`, testPostID, content))
@@ -47,7 +46,7 @@ func TestPostComment(t *testing.T) {
 
 	HandlePostComment(db)(c)
 	if rec.Code != http.StatusCreated {
-		t.Fatalf("expected return code %d, was %d instead", http.StatusCreated, rec.Code)
+		t.Fatalf("return code %d != %d", rec.Code, http.StatusCreated)
 	}
 	comment := model.Comment{}
 	if err := json.NewDecoder(rec.Body).Decode(&comment); err != nil {
@@ -65,14 +64,9 @@ func TestPostComment(t *testing.T) {
 }
 
 func TestPostCommentWithoutPostIDShouldFail(t *testing.T) {
-	setupSuite(t)
-
+	db, _ := setupTest(t)
 	content := "Test comment content."
 
-	db, err := sql.Open("sqlite3", "file:../db.sqlite3?_fk=ON")
-	if err != nil {
-		t.Fatalf("err opening db: %+v", err)
-	}
 	e := echo.New()
 
 	jsonStr := []byte(fmt.Sprintf(`{"content": "%s"}`, content))
@@ -83,17 +77,13 @@ func TestPostCommentWithoutPostIDShouldFail(t *testing.T) {
 
 	HandlePostComment(db)(c)
 	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("expected return code %d, was %d instead", http.StatusCreated, rec.Code)
+		t.Fatalf("return code %d != %d", rec.Code, http.StatusCreated)
 	}
 }
 
 func TestPostCommentWithoutContentShouldFail(t *testing.T) {
-	setupSuite(t)
+	db, testPostID := setupTest(t)
 
-	db, err := sql.Open("sqlite3", "file:../db.sqlite3?_fk=ON")
-	if err != nil {
-		t.Fatalf("err opening db: %+v", err)
-	}
 	e := echo.New()
 
 	jsonStr := []byte(fmt.Sprintf(`{"post_id": "%s"}`, testPostID))
@@ -104,17 +94,13 @@ func TestPostCommentWithoutContentShouldFail(t *testing.T) {
 
 	HandlePostComment(db)(c)
 	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("expected return code %d, was %d instead", http.StatusCreated, rec.Code)
+		t.Fatalf("return code %d != %d", rec.Code, http.StatusCreated)
 	}
 }
 
 func TestPostCommentWithWhiteSpaceContentShouldFail(t *testing.T) {
-	setupSuite(t)
+	db, testPostID := setupTest(t)
 
-	db, err := sql.Open("sqlite3", "file:../db.sqlite3?_fk=ON")
-	if err != nil {
-		t.Fatalf("err opening db: %+v", err)
-	}
 	e := echo.New()
 
 	jsonStr := []byte(fmt.Sprintf(`{"post_id": "%s", "content": "    "}`, testPostID))
@@ -125,6 +111,30 @@ func TestPostCommentWithWhiteSpaceContentShouldFail(t *testing.T) {
 
 	HandlePostComment(db)(c)
 	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("expected return code %d, was %d instead", http.StatusCreated, rec.Code)
+		t.Fatalf("return code %d != %d", rec.Code, http.StatusCreated)
+	}
+}
+
+func TestGetPostComments(t *testing.T) {
+	db, testPostID := setupTest(t)
+
+	e := echo.New()
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/posts/:id/comments")
+	c.SetParamNames("id")
+	c.SetParamValues(testPostID)
+
+	HandleGetPostComments(db)(c)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("return code %d != %d", rec.Code, http.StatusOK)
+	}
+
+	comments := model.Comments{}
+	if err := json.NewDecoder(rec.Body).Decode(&comments); err != nil {
+		t.Fatalf("unable to parse json: %+v", err)
 	}
 }

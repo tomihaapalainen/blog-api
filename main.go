@@ -19,4 +19,5 @@ func main() {
 	e.POST("/posts", handler.HandlePostPosts(db))
 	e.GET("/posts", handler.HandleGetAllPosts(db))
 	e.POST("/posts/comments", handler.HandlePostComment(db))
+	e.GET("/posts/:id/comments", handler.HandleGetPostComments(db))
 }

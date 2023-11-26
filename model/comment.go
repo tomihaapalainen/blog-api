@@ -12,6 +12,8 @@ type Comment struct {
 	Content string `json:"content"`
 }
 
+type Comments []Comment
+
 func (c *Comment) Create(db *sql.DB) error {
 	c.ID = uuid.NewString()
 	stmt, err := db.Prepare(
@@ -24,4 +26,34 @@ func (c *Comment) Create(db *sql.DB) error {
 	}
 	_, err = stmt.Exec(c.ID, c.PostID, c.Content)
 	return err
+}
+
+func (cs *Comments) ReadAllPostComments(db *sql.DB, postID string) error {
+	stmt, err := db.Prepare(
+		`
+		SELECT id, post_id, content
+		FROM comment
+		WHERE post_id = $1
+		`,
+	)
+	if err != nil {
+		return err
+	}
+
+	rows, err := stmt.Query(postID)
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() {
+		c := Comment{}
+
+		if err := rows.Scan(&c.ID, &c.PostID, &c.Content); err != nil {
+			return err
+		}
+
+		*cs = append(*cs, c)
+	}
+
+	return nil
 }

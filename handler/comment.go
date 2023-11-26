@@ -55,3 +55,22 @@ func HandlePostComment(db *sql.DB) echo.HandlerFunc {
 		return c.JSON(http.StatusCreated, comment)
 	})
 }
+
+func HandleGetPostComments(db *sql.DB) echo.HandlerFunc {
+	return echo.HandlerFunc(func(c echo.Context) error {
+		postID := c.Param("postID")
+		comments := model.Comments{}
+		if err := comments.ReadAllPostComments(db, postID); err != nil {
+			log.Printf("err reading comments: %+v", err)
+			return c.JSON(
+				http.StatusInternalServerError,
+				schema.ErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    fmt.Sprintf("Error reading comments: %+v", err),
+				},
+			)
+		}
+
+		return c.JSON(http.StatusOK, comments)
+	})
+}
