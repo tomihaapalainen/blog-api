@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
-	"github.com/tomihaapalainen/blog-api/model"
+	"github.com/tomihaapalainen/blog-api/data"
 )
 
 func setupTest(tb testing.TB) (*sql.DB, string) {
@@ -19,12 +19,12 @@ func setupTest(tb testing.TB) (*sql.DB, string) {
 	if err != nil {
 		tb.Fatalf("err opening db: %+v", err)
 	}
-	p := model.Post{Title: "Test Post", Content: "Test Content"}
+	p := data.Post{Title: "Test Post", Content: "Test Content"}
 	err = p.Create(db)
 	if err != nil {
 		tb.Fatalf("err creating post: %+v", err)
 	}
-	c := model.Comment{PostID: p.ID, Content: "Test Comment"}
+	c := data.Comment{PostID: p.ID, Content: "Test Comment"}
 	if err := c.Create(db); err != nil {
 		tb.Fatalf("err creating comment: %+v", err)
 	}
@@ -48,7 +48,7 @@ func TestPostComment(t *testing.T) {
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("return code %d != %d", rec.Code, http.StatusCreated)
 	}
-	comment := model.Comment{}
+	comment := data.Comment{}
 	if err := json.NewDecoder(rec.Body).Decode(&comment); err != nil {
 		t.Fatalf("unable to parse response: %+v", err)
 	}
@@ -133,7 +133,7 @@ func TestGetPostComments(t *testing.T) {
 		t.Fatalf("return code %d != %d", rec.Code, http.StatusOK)
 	}
 
-	comments := model.Comments{}
+	comments := data.Comments{}
 	if err := json.NewDecoder(rec.Body).Decode(&comments); err != nil {
 		t.Fatalf("unable to parse json: %+v", err)
 	}

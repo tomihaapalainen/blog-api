@@ -11,8 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
-	"github.com/tomihaapalainen/blog-api/model"
-	"github.com/tomihaapalainen/blog-api/schema"
+	"github.com/tomihaapalainen/blog-api/data"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -37,7 +36,7 @@ func TestPostNewPost(t *testing.T) {
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("expected return code %d, was %d instead", http.StatusCreated, rec.Code)
 	}
-	post := model.Post{}
+	post := data.Post{}
 	if err := json.NewDecoder(rec.Body).Decode(&post); err != nil {
 		t.Fatalf("unable to parse response: %+v", err)
 	}
@@ -96,7 +95,7 @@ func TestPostNewPostWithoutContentShouldReturnBadRequest(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected return code %d, was %d instead", http.StatusBadRequest, rec.Code)
 	}
-	res := schema.ErrorResponse{}
+	res := data.ErrorResponse{}
 	if err := json.NewDecoder(rec.Body).Decode(&res); err != nil {
 		t.Fatalf("unable to parse response: %+v", err)
 	}
@@ -119,7 +118,7 @@ func TestPostNewPostWithNullTitleShouldReturnBadRequest(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected return code %d, was %d instead", http.StatusBadRequest, rec.Code)
 	}
-	res := schema.ErrorResponse{}
+	res := data.ErrorResponse{}
 	if err := json.NewDecoder(rec.Body).Decode(&res); err != nil {
 		t.Fatalf("unable to parse response: %+v", err)
 	}
@@ -142,7 +141,7 @@ func TestPostNewPostWithNullContentShouldReturnBadRequest(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected return code %d, was %d instead", http.StatusBadRequest, rec.Code)
 	}
-	res := schema.ErrorResponse{}
+	res := data.ErrorResponse{}
 	if err := json.NewDecoder(rec.Body).Decode(&res); err != nil {
 		t.Fatalf("unable to parse response: %+v", err)
 	}
@@ -164,7 +163,7 @@ func TestGetAllPosts(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("return code %d != %d", rec.Code, http.StatusOK)
 	}
-	res := model.Posts{}
+	res := data.Posts{}
 	if err := json.NewDecoder(rec.Body).Decode(&res); err != nil {
 		t.Fatalf("unable to parse response: %+v", err)
 	}

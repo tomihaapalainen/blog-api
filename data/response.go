@@ -1,4 +1,4 @@
-package schema
+package data
 
 type ErrorResponse struct {
 	StatusCode int    `json:"status_code"`

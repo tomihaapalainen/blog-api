@@ -9,18 +9,17 @@ import (
 	"strings"
 
 	"github.com/labstack/echo"
-	"github.com/tomihaapalainen/blog-api/model"
-	"github.com/tomihaapalainen/blog-api/schema"
+	"github.com/tomihaapalainen/blog-api/data"
 )
 
 func HandlePostPosts(db *sql.DB) echo.HandlerFunc {
 	return echo.HandlerFunc(func(c echo.Context) error {
-		p := model.Post{}
+		p := data.Post{}
 		if err := json.NewDecoder(c.Request().Body).Decode(&p); err != nil {
 			log.Println(fmt.Sprintf("Invalid post data: %+v", err))
 			return c.JSON(
 				http.StatusBadRequest,
-				schema.ErrorResponse{
+				data.ErrorResponse{
 					StatusCode: http.StatusBadRequest,
 					Message:    fmt.Sprintf("Invalid post data: %+v", err),
 				},
@@ -33,7 +32,7 @@ func HandlePostPosts(db *sql.DB) echo.HandlerFunc {
 		if p.Title == "" || p.Content == "" {
 			return c.JSON(
 				http.StatusBadRequest,
-				schema.ErrorResponse{
+				data.ErrorResponse{
 					StatusCode: http.StatusBadRequest,
 					Message:    "Title and content must not be empty",
 				},
@@ -44,7 +43,7 @@ func HandlePostPosts(db *sql.DB) echo.HandlerFunc {
 			log.Println(fmt.Sprintf("Unable to create new post: %+v", err))
 			return c.JSON(
 				http.StatusBadRequest,
-				schema.ErrorResponse{
+				data.ErrorResponse{
 					StatusCode: http.StatusBadRequest,
 					Message:    fmt.Sprintf("Unable to create new post: %+v", err),
 				},
@@ -56,12 +55,12 @@ func HandlePostPosts(db *sql.DB) echo.HandlerFunc {
 
 func HandleGetAllPosts(db *sql.DB) echo.HandlerFunc {
 	return echo.HandlerFunc(func(c echo.Context) error {
-		posts := model.Posts{}
+		posts := data.Posts{}
 		if err := posts.ReadAllPosts(db); err != nil {
 			log.Println(fmt.Sprintf("Error reading all posts: %+v", err))
 			return c.JSON(
 				http.StatusInternalServerError,
-				schema.ErrorResponse{
+				data.ErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Message:    fmt.Sprintf(fmt.Sprintf("Error reading all posts: %+v", err)),
 				},

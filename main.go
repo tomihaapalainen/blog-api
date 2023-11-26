@@ -6,6 +6,8 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/tomihaapalainen/blog-api/handler"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
@@ -20,4 +22,6 @@ func main() {
 	e.GET("/posts", handler.HandleGetAllPosts(db))
 	e.POST("/posts/comments", handler.HandlePostComment(db))
 	e.GET("/posts/:id/comments", handler.HandleGetPostComments(db))
+
+	e.Start(":8080")
 }
