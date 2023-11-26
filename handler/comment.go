@@ -31,6 +31,7 @@ func HandlePostComment(db *sql.DB) echo.HandlerFunc {
 		comment.Content = strings.TrimSpace(comment.Content)
 
 		if comment.PostID == "" || comment.Content == "" {
+			log.Println("Post id and content cannot be empty")
 			return c.JSON(
 				http.StatusBadRequest,
 				schema.ErrorResponse{
